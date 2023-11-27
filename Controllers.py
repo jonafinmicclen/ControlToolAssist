@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-import sys
-import array
-
 import numpy as np
 
 from inputs import get_gamepad
