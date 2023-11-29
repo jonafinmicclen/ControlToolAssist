@@ -1,61 +1,76 @@
-import dash
-from dash import dcc, html
-from dash.dependencies import Input, Output
+import tkinter as tk
+from tkinter import ttk
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
 
-app = dash.Dash(__name__)
+class Visualiser:
+    def __init__(self, root, x_data, y_data):
+        self.root = root
+        self.root.title("Interactive Plot")
+        self.root.geometry("600x400")
+        self.x_data = x_data
+        self.y_data = y_data
 
-app.layout = html.Div([
-    dcc.Graph(id='graph'),
-    html.Button('Add Point', id='add-button', n_clicks=0),
-    html.Button('Remove Point', id='remove-button', n_clicks=0),
-    dcc.Dropdown(
-        id='interpolation-dropdown',
-        options=[
-            {'label': 'Linear', 'value': 'linear'},
-            {'label': 'Spline', 'value': 'spline'}
-        ],
-        value='linear',
-        style={'width': '200px'}
-    )
-])
+        self.create_widgets()
 
-points = {'x': [1, 2, 3, 4, 5], 'y': [10, 5, 20, 15, 25]}
+    def create_widgets(self):
+        # Create a Matplotlib figure and axis
+        self.figure, self.axis = Figure(), None  # Will be set during plot initialization
 
-@app.callback(
-    Output('graph', 'figure'),
-    [Input('add-button', 'n_clicks'),
-     Input('remove-button', 'n_clicks'),
-     Input('interpolation-dropdown', 'value')]
-)
-def update_graph(add_clicks, remove_clicks, interpolation_method):
-    if add_clicks > 0:
-        x, y = np.random.rand(2) * 10  # Randomly generate x, y coordinates for the new point
-        points['x'].append(x)
-        points['y'].append(y)
+        # Create a canvas to embed the Matplotlib plot
+        self.canvas = FigureCanvasTkAgg(self.figure, master=self.root)
+        self.canvas_widget = self.canvas.get_tk_widget()
+        self.canvas_widget.pack(fill=tk.BOTH, expand=True)
 
-    if remove_clicks > 0 and len(points['x']) > 1:
-        points['x'].pop()
-        points['y'].pop()
+        # Create a button to toggle interaction mode
+        self.interaction_button = ttk.Button(self.root, text="Toggle Interaction", command=self.toggle_interaction)
+        self.interaction_button.pack()
 
-    fig = {
-        'data': [
-            {'x': points['x'], 'y': points['y'], 'type': 'scatter', 'mode': 'markers+lines', 'name': 'Data Points'},
-        ],
-        'layout': {
-            'title': f'Interpolation: {interpolation_method}',
-            'xaxis': {'title': 'X-axis'},
-            'yaxis': {'title': 'Y-axis'},
-        }
-    }
+        # Set up the initial plot
+        self.plot_initial_data()
 
-    if interpolation_method == 'spline':
-        fig['data'].append({'x': np.linspace(min(points['x']), max(points['x']), 100),
-                            'y': np.interp(np.linspace(min(points['x']), max(points['x']), 100),
-                                           points['x'], points['y']),
-                            'type': 'scatter', 'mode': 'lines', 'name': 'Interpolation'})
+    def plot_initial_data(self):
+        # Create initial data for plotting
+        x_data = self.x_data
+        y_data = self.y_data
 
-    return fig
+        # Plot the initial data
+        self.axis = self.figure.add_subplot(111)
+        self.plot, = self.axis.plot(x_data, y_data, marker='o', linestyle='-', color='b')
+        self.canvas.draw()
 
-if __name__ == '__main__':
-    app.run_server(debug=True)
+        # Set up event handling for interaction
+        self.is_interactive = False
+        self.canvas.mpl_connect('button_press_event', self.on_click)
+
+    def toggle_interaction(self):
+        # Toggle interaction mode
+        self.is_interactive = not self.is_interactive
+        if self.is_interactive:
+            print("Interaction mode enabled. Click on the plot to move points.")
+        else:
+            print("Interaction mode disabled.")
+
+    def on_click(self, event):
+        # Handle click events when interaction mode is enabled
+        if self.is_interactive and event.inaxes == self.axis:
+            # Update the y-coordinate of the clicked point to the cursor's y-coordinate
+            x_clicked, y_clicked = event.xdata, event.ydata
+            index_clicked = (np.abs(np.array(self.plot.get_xdata()) - x_clicked)).argmin()
+
+            # Set the y-coordinate of the clicked point to the cursor's y-coordinate
+            y_data = self.plot.get_ydata()
+            y_data[index_clicked] = y_clicked
+
+            # Clear the current axis
+            self.axis.clear()
+
+            # Replot the entire dataset
+            self.plot, = self.axis.plot(self.plot.get_xdata(), y_data, marker='o', linestyle='-', color='b')
+            self.canvas.draw()
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = Visualiser(root)
+    root.mainloop()
