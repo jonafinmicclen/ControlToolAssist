@@ -1,5 +1,5 @@
 import Controllers
-import numpy
+import numpy as np
 
 #Default values
 log_rate_ms = 300
