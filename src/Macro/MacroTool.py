@@ -8,7 +8,7 @@ from inputs import get_gamepad
 from PIL import Image
 import pyautogui
 
-class CTA_Macro:
+class MacroTool:
 
     def __init__(self, path=None):
 
@@ -113,32 +113,36 @@ class CTA_Macro:
             time.sleep(self.ScreenPollingT)
             self.ScreenStates.append(pyautogui.screenshot().tobytes())
 
+    def play(self):
+        pass
+
     def save(self):
         if self.recording == True:
             raise Exception('Cannot save while recording')
         else:
-            print(self.ScreenStates[0])
+            #Exclude non-necessary attributes from saving
             self._record_screen_thread = None
             self._record_controller_thread = None
-            print(self.ScreenStates[0])
+
             with open(self.path, "wb") as file:
                 pickle.dump(self, file)
-            print(self.ScreenStates[0])
 
     @classmethod
     def load(cls, filename):
         with open(filename, "rb") as file:
             return pickle.load(file)
 
-newMacro = CTA_Macro()
-newMacro.start_recording()
-time.sleep(10)
-print(newMacro.path)
-newMacro.stop_recording()
-newMacro.save()
+if __name__ == '__main__':
+    
+    newMacro = MacroTool()
+    newMacro.start_recording()
+    time.sleep(10)
+    print(newMacro.path)
+    newMacro.stop_recording()
+    newMacro.save()
 
-loadedMacro = CTA_Macro.load(newMacro.path)
-print(loadedMacro.ScreenStates)
-screenshot = loadedMacro.ScreenStates[0]
-image = Image.frombytes('RGB',(1920,1080),screenshot)
-image.show()
+    loadedMacro = MacroTool.load(newMacro.path)
+    print(loadedMacro.ScreenStates)
+    screenshot = loadedMacro.ScreenStates[0]
+    image = Image.frombytes('RGB',(1920,1080),screenshot)
+    image.show()
