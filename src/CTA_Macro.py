@@ -7,7 +7,6 @@ import time
 from inputs import get_gamepad
 from PIL import Image
 import pyautogui
-import base64
 
 class CTA_Macro:
 
@@ -112,20 +111,19 @@ class CTA_Macro:
     def _recording_screen(self):
         while self.recording == True:
             time.sleep(self.ScreenPollingT)
-
-            screenshot_data = pyautogui.screenshot().tobytes()
-            screenshot_encoded = base64.b64encode(screenshot_data).decode('utf-8')
-            self.ScreenStates.append(screenshot_encoded)
+            self.ScreenStates.append(pyautogui.screenshot().tobytes())
 
     def save(self):
         if self.recording == True:
             raise Exception('Cannot save while recording')
         else:
+            print(self.ScreenStates[0])
             self._record_screen_thread = None
             self._record_controller_thread = None
-            
+            print(self.ScreenStates[0])
             with open(self.path, "wb") as file:
                 pickle.dump(self, file)
+            print(self.ScreenStates[0])
 
     @classmethod
     def load(cls, filename):
@@ -134,7 +132,13 @@ class CTA_Macro:
 
 newMacro = CTA_Macro()
 newMacro.start_recording()
-time.sleep(3)
+time.sleep(10)
+print(newMacro.path)
 newMacro.stop_recording()
 newMacro.save()
-print(newMacro.path)
+
+loadedMacro = CTA_Macro.load(newMacro.path)
+print(loadedMacro.ScreenStates)
+screenshot = loadedMacro.ScreenStates[0]
+image = Image.frombytes('RGB',(1920,1080),screenshot)
+image.show()
