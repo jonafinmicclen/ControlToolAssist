@@ -19,7 +19,6 @@ class MacroTool:
         self.recording = False
         self.playing = False
         
-        self.vController = Controller.VirtualController()
         self.ControllerPollingT = ControllerPollingT
         self.ScreenPollingT = ScreenPollingT
 
@@ -55,12 +54,12 @@ class MacroTool:
         controller = Controller.XboxController()
 
         while self.recording == True:
-            elapsedTime = time.time() - startTime
-            if elapsedTime >= self.ControllerPollingT*samplesN:
                 
-                controllerState = controller.read()
-                self.ControllerStates.append([controllerState, elapsedTime])
-                samplesN+=1
+            controllerState = controller.read()
+            self.ControllerStates.append([controllerState, time.time() - startTime])
+            samplesN+=1
+
+            time.sleep(self.ControllerPollingT)
             
         self.ControllerSamples = samplesN
     
@@ -70,11 +69,11 @@ class MacroTool:
         samplesN = 0
 
         while self.recording == True:
-            elapsedTime = time.time() - startTime
-            if elapsedTime >= self.ScreenPollingT*samplesN:
 
-                self.ScreenStates.append([pyautogui.screenshot().tobytes(), elapsedTime])
-                samplesN+=1
+            self.ScreenStates.append([pyautogui.screenshot().tobytes(), time.time()-startTime])
+            samplesN+=1
+
+            time.sleep(self.ScreenPollingT)
         
         self.ScreenSamples = samplesN
 
@@ -86,17 +85,15 @@ class MacroTool:
         self.playing = True
 
     def _playing(self):
-        
-        startTime = time.time()
+
         samplesN = 0
+        self.vController = Controller.VirtualController()
 
         while samplesN< self.ControllerSamples:
-            elapsedTime = time.time()-startTime
-            if elapsedTime >= self.ControllerStates[samplesN][1]:
 
-                self.vController.play(self.ControllerStates[samplesN][0])
-
-                samplesN += 1
+            self.vController.play(self.ControllerStates[samplesN][0])
+            samplesN += 1
+            time.sleep(self.ControllerPollingT)
 
         self.vController.controller.reset()
         self.vController.controller.update()
