@@ -45,6 +45,8 @@ class MacroTool:
     def stop_recording(self):
 
         self.recording = False
+        self._record_controller_thread.join()
+        self._record_screen_thread.join()
 
     def _recording_controller(self):
 
@@ -82,6 +84,7 @@ class MacroTool:
         self._playing_thread.daemon = True
         self._playing_thread.start()
         self.playing = True
+        self._playing_thread.join()
 
     def _playing(self):
         
