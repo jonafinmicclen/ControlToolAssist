@@ -4,7 +4,7 @@ Basic control macro tool
 Current State (semi functional):
 - Records input
 - Save/load input
-- Playback through virtual Xbox360 controller
+- Playback through virtual Xbox360 controller (haven't added all controller buttons)
 - No limitations on GUI (easy to break if you dont press right buttons)
 - No ability to modify saved macros
 
