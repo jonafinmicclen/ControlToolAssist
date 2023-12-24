@@ -55,12 +55,12 @@ class MacroTool:
         controller = Controller.XboxController()
 
         while self.recording == True:
+
             elapsedTime = time.time() - startTime
-            if elapsedTime >= self.ControllerPollingT*samplesN:
+            time.sleep(max(0, self.ScreenPollingT*samplesN - elapsedTime))
                 
-                controllerState = controller.read()
-                self.ControllerStates.append([controllerState, elapsedTime])
-                samplesN+=1
+            self.ControllerStates.append([controller.read(), time.time() - startTime])
+            samplesN+=1
             
         self.ControllerSamples = samplesN
     
@@ -70,11 +70,12 @@ class MacroTool:
         samplesN = 0
 
         while self.recording == True:
-            elapsedTime = time.time() - startTime
-            if elapsedTime >= self.ScreenPollingT*samplesN:
 
-                self.ScreenStates.append([pyautogui.screenshot().tobytes(), elapsedTime])
-                samplesN+=1
+            elapsedTime = time.time() - startTime
+            time.sleep(max(0, self.ScreenPollingT*samplesN - elapsedTime))
+
+            self.ScreenStates.append([pyautogui.screenshot().tobytes(), elapsedTime])
+            samplesN+=1
         
         self.ScreenSamples = samplesN
 
@@ -91,12 +92,12 @@ class MacroTool:
         samplesN = 0
 
         while samplesN< self.ControllerSamples:
+
             elapsedTime = time.time()-startTime
-            if elapsedTime >= self.ControllerStates[samplesN][1]:
+            time.sleep(max(0, self.ControllerStates[samplesN][1] - elapsedTime))
 
-                self.vController.play(self.ControllerStates[samplesN][0])
-
-                samplesN += 1
+            self.vController.play(self.ControllerStates[samplesN][0])
+            samplesN += 1
 
         self.vController.controller.reset()
         self.vController.controller.update()
