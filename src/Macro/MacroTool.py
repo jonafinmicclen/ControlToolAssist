@@ -84,7 +84,6 @@ class MacroTool:
         self._playing_thread.daemon = True
         self._playing_thread.start()
         self.playing = True
-        self._playing_thread.join()
 
     def _playing(self):
         
