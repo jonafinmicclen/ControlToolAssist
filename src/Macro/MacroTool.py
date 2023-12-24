@@ -108,7 +108,7 @@ class MacroTool:
             self._record_screen_thread = None
             self._record_controller_thread = None
             self._playing_thread = None
-            self.vController = None
+            self.vController = None ##This will cause error when playback from loaded in macro
 
             with open(self.path, "wb") as file:
                 pickle.dump(self, file)
