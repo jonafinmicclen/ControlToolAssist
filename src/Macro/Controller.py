@@ -110,7 +110,7 @@ class VirtualController():
     def __init__(self):
         
         self.controller = vgamepad.VX360Gamepad()
-        self.current_state = [0,0,0,0, 0, 0, 0, 0, 0, 0, 0, 0]
+        self.current_state = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
     def play(self, state):
         
