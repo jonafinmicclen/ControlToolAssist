@@ -17,7 +17,9 @@ class MacroTool:
         self.ScreenStates = []
 
         self.recording = False
-
+        self.playing = False
+        
+        self.vController = Controller.VirtualController()
         self.ControllerPollingT = ControllerPollingT
         self.ScreenPollingT = ScreenPollingT
 
@@ -66,7 +68,7 @@ class MacroTool:
         samplesN = 0
 
         while self.recording == True:
-            elapsedTime = time.time()-startTime
+            elapsedTime = time.time() - startTime
             if elapsedTime >= self.ScreenPollingT*samplesN:
 
                 self.ScreenStates.append([pyautogui.screenshot().tobytes(), elapsedTime])
@@ -79,19 +81,24 @@ class MacroTool:
         self._playing_thread = threading.Thread(target=self._playing)
         self._playing_thread.daemon = True
         self._playing_thread.start()
+        self.playing = True
 
     def _playing(self):
         
         startTime = time.time()
         samplesN = 0
-        virtualController = Controller.VirtualController()
 
         while samplesN< self.ControllerSamples:
             elapsedTime = time.time()-startTime
             if elapsedTime >= self.ControllerStates[samplesN][1]:
 
-                virtualController.play(self.ControllerStates[samplesN][0])
+                self.vController.play(self.ControllerStates[samplesN][0])
+
                 samplesN += 1
+
+        self.vController.controller.reset()
+        self.vController.controller.update()
+        self.playing = False
 
     def save(self):
         if self.recording == True:
@@ -100,6 +107,8 @@ class MacroTool:
             #Exclude non-necessary attributes from saving
             self._record_screen_thread = None
             self._record_controller_thread = None
+            self._playing_thread = None
+            self.vController = None
 
             with open(self.path, "wb") as file:
                 pickle.dump(self, file)
@@ -108,18 +117,5 @@ class MacroTool:
     def load(cls, filename):
         with open(filename, "rb") as file:
             return pickle.load(file)
-
-if __name__ == '__main__':
-    
-    newMacro = MacroTool()
-    newMacro.start_recording()
-    time.sleep(10)
-    print(newMacro.path)
-    newMacro.stop_recording()
-    newMacro.save()
-
-    loadedMacro = MacroTool.load(newMacro.path)
-    print(loadedMacro.ScreenStates)
-    screenshot = loadedMacro.ScreenStates[0]
-    image = Image.frombytes('RGB',(1920,1080),screenshot)
-    image.show()
+        
+        

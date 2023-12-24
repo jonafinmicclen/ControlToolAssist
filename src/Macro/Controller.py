@@ -2,7 +2,6 @@ import math
 import threading
 from inputs import get_gamepad
 import vgamepad
-import time
 
 class XboxController:
 
@@ -117,18 +116,10 @@ class VirtualController():
         self.controller.left_trigger_float(value_float=state[4])
         self.controller.right_trigger_float(value_float=state[5])
 
-        #if state[6] == 1:
-        #    self.controller.press_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_RIGHT_SHOULDER)
-        #else:
-        #    self.controller.release_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_RIGHT_SHOULDER)
+        if state[6] == 1:
+            self.controller.press_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_RIGHT_SHOULDER)
+        else:
+            self.controller.release_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_RIGHT_SHOULDER)
 
         self.controller.update()
         self.current_state = state
-
-if __name__ == '__main__':
-
-    ctrlr = XboxController()
-
-    while True:
-        time.sleep(0.2)
-        print(ctrlr.read())
