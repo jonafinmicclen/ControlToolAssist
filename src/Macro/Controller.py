@@ -117,9 +117,34 @@ class VirtualController():
         self.controller.right_trigger_float(value_float=state[5])
 
         if state[6] == 1:
+            self.controller.press_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_LEFT_SHOULDER)
+        else:
+            self.controller.release_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_LEFT_SHOULDER)
+
+        if state[7] == 1:
             self.controller.press_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_RIGHT_SHOULDER)
         else:
             self.controller.release_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_RIGHT_SHOULDER)
+
+        if state[8] == 1:
+            self.controller.press_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_A)
+        else:
+            self.controller.release_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_A)
+
+        if state[9] == 1:
+            self.controller.press_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_X)
+        else:
+            self.controller.release_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_X)
+        
+        if state[10] == 1:
+            self.controller.press_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_Y)
+        else:
+            self.controller.release_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_Y)
+
+        if state[11] == 1:
+            self.controller.press_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_B)
+        else:
+            self.controller.release_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_B)
 
         self.controller.update()
         self.current_state = state
