@@ -7,37 +7,19 @@ import time
 from inputs import get_gamepad
 from PIL import Image
 import pyautogui
+from Macro import Controller
 
 class MacroTool:
 
-    def __init__(self, path=None):
+    def __init__(self, ControllerPollingT, ScreenPollingT, path=None):
 
-        self.LeftJoystickY = []
-        self.LeftJoystickX = []
-        self.RightJoystickY = []
-        self.RightJoystickX = []
-        self.LeftTrigger = []
-        self.RightTrigger = []
-        self.LeftBumper = []
-        self.RightBumper = []
-        self.A = []
-        self.X = []
-        self.Y = []
-        self.B = []
-        self.LeftThumb = []
-        self.RightThumb = []
-        self.Back = []
-        self.Start = []
-        self.LeftDPad = []
-        self.RightDPad = []
-        self.UpDPad = []
-        self.DownDPad = []
+        self.ControllerStates = []
         self.ScreenStates = []
 
         self.recording = False
 
-        self.ControllerPollingT = 1/1000 #These should get from config file 
-        self.ScreenPollingT = 1/1
+        self.ControllerPollingT = ControllerPollingT
+        self.ScreenPollingT = ScreenPollingT
 
         if path==None:
             dateAndTime = str(datetime.now())
@@ -59,62 +41,57 @@ class MacroTool:
         self.recording = True
 
     def stop_recording(self):
+
         self.recording = False
 
     def _recording_controller(self):
-        while self.recording == True:
-            time.sleep(self.ControllerPollingT)
-            events = get_gamepad()
 
-            for event in events:
-                if event.code == 'ABS_Y':
-                    self.LeftJoystickY.append(event.state)
-                elif event.code == 'ABS_X':
-                    self.LeftJoystickX.append(event.state)
-                elif event.code == 'ABS_RY':
-                    self.RightJoystickY.append(event.state)
-                elif event.code == 'ABS_RX':
-                    self.RightJoystickX.append(event.state)
-                elif event.code == 'ABS_Z':
-                    self.LeftTrigger.append(event.state)
-                elif event.code == 'ABS_RZ':
-                    self.RightTrigger.append(event.state)
-                elif event.code == 'BTN_TL':
-                    self.LeftBumper.append(event.state)
-                elif event.code == 'BTN_TR':
-                    self.RightBumper.append(event.state)
-                elif event.code == 'BTN_SOUTH':
-                    self.A.append(event.state)
-                elif event.code == 'BTN_NORTH':
-                    self.X.append(event.state)
-                elif event.code == 'BTN_WEST':
-                    self.Y.append(event.state)
-                elif event.code == 'BTN_EAST':
-                    self.B.append(event.state)
-                elif event.code == 'BTN_THUMBL':
-                    self.LeftThumb.append(event.state)
-                elif event.code == 'BTN_THUMBR':
-                    self.RightThumb.append(event.state)
-                elif event.code == 'BTN_SELECT':
-                    self.Back.append(event.state)
-                elif event.code == 'BTN_START':
-                    self.Start.append(event.state)
-                elif event.code == 'BTN_TRIGGER_HAPPY1':
-                    self.LeftDPad.append(event.state)
-                elif event.code == 'BTN_TRIGGER_HAPPY2':
-                    self.RightDPad.append(event.state)
-                elif event.code == 'BTN_TRIGGER_HAPPY3':
-                    self.UpDPad.append(event.state)
-                elif event.code == 'BTN_TRIGGER_HAPPY4':
-                    self.DownDPad.append(event.state)
+        samplesN = 0
+        startTime = time.time()
+        controller = Controller.XboxController()
+
+        while self.recording == True:
+            elapsedTime = time.time() - startTime
+            if elapsedTime >= self.ControllerPollingT*samplesN:
+                
+                controllerState = controller.read()
+                self.ControllerStates.append([controllerState, elapsedTime])
+                samplesN+=1
+            
+        self.ControllerSamples = samplesN
     
     def _recording_screen(self):
+
+        startTime = time.time()
+        samplesN = 0
+
         while self.recording == True:
-            time.sleep(self.ScreenPollingT)
-            self.ScreenStates.append(pyautogui.screenshot().tobytes())
+            elapsedTime = time.time()-startTime
+            if elapsedTime >= self.ScreenPollingT*samplesN:
+
+                self.ScreenStates.append([pyautogui.screenshot().tobytes(), elapsedTime])
+                samplesN+=1
+        
+        self.ScreenSamples = samplesN
 
     def play(self):
-        pass
+        
+        self._playing_thread = threading.Thread(target=self._playing)
+        self._playing_thread.daemon = True
+        self._playing_thread.start()
+
+    def _playing(self):
+        
+        startTime = time.time()
+        samplesN = 0
+        virtualController = Controller.VirtualController()
+
+        while samplesN< self.ControllerSamples:
+            elapsedTime = time.time()-startTime
+            if elapsedTime >= self.ControllerStates[samplesN][1]:
+
+                virtualController.play(self.ControllerStates[samplesN][0])
+                samplesN += 1
 
     def save(self):
         if self.recording == True:
