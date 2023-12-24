@@ -2,6 +2,7 @@ import math
 import threading
 from inputs import get_gamepad
 import vgamepad
+import time
 
 class XboxController:
 
@@ -54,7 +55,12 @@ class XboxController:
         by = self.Y
         bb = self.B
 
-        return [lsx,lsy,rsx,rsy,lt,rt,lb,rb,ba,bx,by,bb]
+        ldp = self.LeftDPad
+        rdp = self.RightDPad
+        udp = self.UpDPad
+        ddp = self.DownDPad
+
+        return [lsx,lsy,rsx,rsy,lt,rt,lb,rb,ba,bx,by,bb,ldp,rdp,udp,ddp]
 
     def _monitor_controller(self):
         while True:
@@ -92,14 +98,12 @@ class XboxController:
                     self.Back = event.state
                 elif event.code == 'BTN_START':
                     self.Start = event.state
-                elif event.code == 'BTN_TRIGGER_HAPPY1':
-                    self.LeftDPad = event.state
-                elif event.code == 'BTN_TRIGGER_HAPPY2':
-                    self.RightDPad = event.state
-                elif event.code == 'BTN_TRIGGER_HAPPY3':
-                    self.UpDPad = event.state
-                elif event.code == 'BTN_TRIGGER_HAPPY4':
-                    self.DownDPad = event.state
+                elif event.code == 'ABS_HAT0X': #Not sure why d pad so weird
+                    self.RightDPad = max(0, event.state)
+                    self.LeftDPad = max(0, -event.state)
+                elif event.code == 'ABS_HAT0Y':
+                    self.UpDPad = max(0, -event.state)
+                    self.DownDPad = max(0, event.state)
 
 class VirtualController():
 
@@ -146,5 +150,31 @@ class VirtualController():
         else:
             self.controller.release_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_B)
 
+        if state[12] == 1:
+            self.controller.press_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_LEFT)
+        else:
+            self.controller.release_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_LEFT)
+
+        if state[13] == 1:
+            self.controller.press_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_RIGHT)
+        else:
+            self.controller.release_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_RIGHT)
+
+        if state[14] == 1:
+            self.controller.press_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_UP)
+        else:
+            self.controller.release_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_UP)
+
+        if state[15] == 1:
+            self.controller.press_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_DOWN)
+        else:
+            self.controller.release_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_DOWN)
+
         self.controller.update()
         self.current_state = state
+
+if __name__ == '__main__':
+    ctrlr = XboxController()
+    while True:
+        time.sleep(0.5)
+        print(ctrlr.read())
