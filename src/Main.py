@@ -13,7 +13,7 @@ class App(tk.Tk):
         super().__init__()
 
         self.title("Control Tool Assist")
-        self.geometry("300x400")
+        self.geometry("300x700")
 
         self.load_gui()
         self.config = config.Config()
