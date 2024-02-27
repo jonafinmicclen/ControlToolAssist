@@ -15,12 +15,24 @@ class MacroTool:
 
         self.ControllerStates = []
         self.ScreenStates = []
+        
+        # Threads
+        self._record_screen_thread = None
+        self._record_controller_thread = None
+        self._passthrough_thread = None
 
+        # Thread flags
         self.recording = False
         self.playing = False
+        self.passthrough = False
         
+        # Polling rate config
         self.ControllerPollingT = ControllerPollingT
+        self.passthrough_delay = ControllerPollingT
         self.ScreenPollingT = ScreenPollingT
+        
+        self.vController = Controller.VirtualController()
+        self.controller = Controller.XboxController()
 
         if path==None:
             dateAndTime = str(datetime.now())
@@ -51,11 +63,10 @@ class MacroTool:
 
         samplesN = 0
         startTime = time.time()
-        controller = Controller.XboxController()
 
         while self.recording == True:
                 
-            controllerState = controller.read()
+            controllerState = self.controller.read()
             self.ControllerStates.append([controllerState, time.time() - startTime])
             samplesN+=1
 
@@ -76,7 +87,24 @@ class MacroTool:
             time.sleep(self.ScreenPollingT)
         
         self.ScreenSamples = samplesN
-
+        
+    def _passthrough(self):
+        
+        while self.passthrough:
+            self.vController.play(self.controller.read())
+            time.sleep(self.passthrough_delay)
+            
+    def start_pasthrough(self):
+        
+        self._passthrough_thread = threading.Thread(target=self._passthrough)
+        self._passthrough_thread.daemon = True
+        self._passthrough_thread.start()
+        
+    def stop_passthrough(self):
+        
+        self.passthrough = False
+        self._passthrough_thread.join()
+            
     def play(self):
         
         self._playing_thread = threading.Thread(target=self._playing)
@@ -87,7 +115,6 @@ class MacroTool:
     def _playing(self):
 
         samplesN = 0
-        self.vController = Controller.VirtualController()
 
         while samplesN< self.ControllerSamples:
 

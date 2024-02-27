@@ -35,7 +35,9 @@ class XboxController:
         self._monitor_thread = threading.Thread(target=self._monitor_controller, args=())
         self._monitor_thread.daemon = True
         self._monitor_thread.start()
-
+        
+        self.controller_reconect_wait = 5
+        self.max_connect_attempts = 5
 
     def read(self):
 
@@ -64,7 +66,15 @@ class XboxController:
 
     def _monitor_controller(self):
         while True:
-            events = get_gamepad()
+            # Attempt to connect to controller
+            for _ in range(self.max_connect_attempts):
+                try:
+                    events = get_gamepad()
+                    break
+                except Exception as e:
+                    print(f"Failed to find controller, retying in {self.controller_reconect_wait}")
+                    time.sleep(self.controller_reconect_wait)
+                    
             for event in events:
                 if event.code == 'ABS_Y':
                     self.LeftJoystickY = event.state / XboxController.MAX_JOY_VAL
