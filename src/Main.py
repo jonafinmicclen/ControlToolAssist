@@ -37,6 +37,12 @@ class App(tk.Tk):
 
         load_button = ttk.Button(self, text="Load Macro", command=self.load)
         load_button.pack(pady=20)
+        
+        start_passthrough_button = ttk.Button(self, text="start_passthrough_button", command=self.start_passthrough)
+        start_passthrough_button.pack(pady=20)
+        
+    def start_passthrough(self):
+        self.LoadedMacro.start_pasthrough()
 
     def start_recording(self):
         self.LoadedMacro.start_recording()

@@ -95,7 +95,7 @@ class MacroTool:
             time.sleep(self.passthrough_delay)
             
     def start_pasthrough(self):
-        
+        self.passthrough = True
         self._passthrough_thread = threading.Thread(target=self._passthrough)
         self._passthrough_thread.daemon = True
         self._passthrough_thread.start()
