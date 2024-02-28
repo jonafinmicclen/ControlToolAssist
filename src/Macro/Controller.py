@@ -66,7 +66,7 @@ class XboxController:
 
     def _monitor_controller(self):
         while True:
-            # Attempt to connect to controller
+            # Attempt to get input from controller
             for _ in range(self.max_connect_attempts):
                 try:
                     events = get_gamepad()
@@ -124,64 +124,32 @@ class VirtualController():
 
     def play(self, state):
         
+        # Set analog states
         self.controller.left_joystick_float(x_value_float=state[0], y_value_float=state[1])
         self.controller.right_joystick_float(x_value_float=state[2],y_value_float=state[3])
-
         self.controller.left_trigger_float(value_float=state[4])
         self.controller.right_trigger_float(value_float=state[5])
 
-        if state[6] == 1:
-            self.controller.press_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_LEFT_SHOULDER)
-        else:
-            self.controller.release_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_LEFT_SHOULDER)
-
-        if state[7] == 1:
-            self.controller.press_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_RIGHT_SHOULDER)
-        else:
-            self.controller.release_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_RIGHT_SHOULDER)
-
-        if state[8] == 1:
-            self.controller.press_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_A)
-        else:
-            self.controller.release_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_A)
-
-        if state[9] == 1:
-            self.controller.press_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_X)
-        else:
-            self.controller.release_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_X)
-        
-        if state[10] == 1:
-            self.controller.press_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_Y)
-        else:
-            self.controller.release_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_Y)
-
-        if state[11] == 1:
-            self.controller.press_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_B)
-        else:
-            self.controller.release_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_B)
-
-        if state[12] == 1:
-            self.controller.press_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_LEFT)
-        else:
-            self.controller.release_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_LEFT)
-
-        if state[13] == 1:
-            self.controller.press_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_RIGHT)
-        else:
-            self.controller.release_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_RIGHT)
-
-        if state[14] == 1:
-            self.controller.press_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_UP)
-        else:
-            self.controller.release_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_UP)
-
-        if state[15] == 1:
-            self.controller.press_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_DOWN)
-        else:
-            self.controller.release_button(button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_DOWN)
+        # Set binary states
+        self.setControllerButtonState(state[6], button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_LEFT_SHOULDER)
+        self.setControllerButtonState(state[7], button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_RIGHT_SHOULDER)
+        self.setControllerButtonState(state[8], button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_A)
+        self.setControllerButtonState(state[9], button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_X)
+        self.setControllerButtonState(state[10], button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_Y)
+        self.setControllerButtonState(state[11], button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_B)
+        self.setControllerButtonState(state[12], button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_LEFT)
+        self.setControllerButtonState(state[13], button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_RIGHT)
+        self.setControllerButtonState(state[14], button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_UP)
+        self.setControllerButtonState(state[15], button=vgamepad.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_DOWN)
 
         self.controller.update()
         self.current_state = state
+
+    def setControllerButtonState(self, state, button):
+        if state == 1:
+            self.controller.press_button(button=button)
+        else:
+            self.controller.release_button(button=button)
 
 if __name__ == '__main__':
     ctrlr = XboxController()

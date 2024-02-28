@@ -8,33 +8,34 @@ from inputs import get_gamepad
 from PIL import Image
 import pyautogui
 from Macro import Controller
+import utilities
 
 class MacroTool:
 
-    def __init__(self, ControllerPollingT, ScreenPollingT, path=None):
+    def __init__(self, controller_polling_T, screen_polling_T, path=None):
 
         # Recordings
         self.controller_states = []
         self.screen_states = []
         self.controller_samples = 0
+        self.screen_samples = 0
         
         # Threads
         self._record_screen_thread = None
         self._record_controller_thread = None
         self._passthrough_thread = None
-
         # Thread flags
         self.recording = False
         self.playing = False
         self.passthrough = False
         
         # Polling rate config
-        self.ControllerPollingT = ControllerPollingT
-        self.passthrough_delay = ControllerPollingT
-        self.ScreenPollingT = ScreenPollingT
+        self.controller_polling_T = controller_polling_T
+        self.passthrough_delay = controller_polling_T
+        self.screen_polling_T = screen_polling_T
         
-        self.vController = Controller.VirtualController()
-        self.controller = Controller.XboxController()
+        self.virtual_controller = Controller.VirtualController()
+        self.real_controller = Controller.XboxController()
 
         if path==None:
             dateAndTime = str(datetime.now())
@@ -51,7 +52,7 @@ class MacroTool:
         self._record_screen_thread.start()
 
         # Record controller state
-        self.startTime = time.time()
+        self.recording_start_time = time.time()
         self.recording = True
         self._record_controller_thread = threading.Thread(target=self._recording_controller)
         self._record_controller_thread.daemon = True
@@ -66,43 +67,38 @@ class MacroTool:
 
     def _recording_controller(self):
 
-        while self.recording and not self.passthrough:
+        while self.recording:
 
-            self.snapshot_controller_state()
-            time.sleep(self.ControllerPollingT)
+            time_taken = utilities.elapsed_time_from_function(self.snapshot_controller_state())
+            time.sleep(self.controller_polling_T - time_taken)
             
         
     def snapshot_controller_state(self):
 
-        controllerState = self.controller.read()
-        self.controller_states.append([controllerState, time.time() - self.startTime])
+        controllerState = self.real_controller.read()
+        self.controller_states.append([controllerState, time.time() - self.recording_start_time])
         self.controller_samples+=1
     
     def _recording_screen(self):
 
-        startTime = time.time()
-        samplesN = 0
-
         while self.recording == True:
 
-            self.screen_states.append([pyautogui.screenshot().tobytes(), time.time()-startTime])
-            samplesN+=1
+            time_taken = utilities.elapsed_time_from_function(self.snapshot_screen())
+            time.sleep(self.screen_polling_T - time_taken)
 
-            time.sleep(self.ScreenPollingT)
-        
-        self.ScreenSamples = samplesN
+    def snapshot_screen(self):
+
+        self.screen_states.append([pyautogui.screenshot().tobytes(), time.time()-self.recording_start_time])
+        self.screen_samples += 1
         
     def _passthrough(self):
         
         while self.passthrough:
 
             if not self.playing:
-                self.vController.play(self.controller.read())
+                time_taken = utilities.elapsed_time_from_function(self.virtual_controller.play(), self.real_controller.read())
 
-            if self.recording:
-                self.snapshot_controller_state()
-
-            time.sleep(self.passthrough_delay)
+            time.sleep(self.controller_polling_T - time_taken)
             
     def start_pasthrough(self):
         self.passthrough = True
@@ -128,12 +124,12 @@ class MacroTool:
 
         while samplesN< self.controller_samples:
 
-            self.vController.play(self.controller_states[samplesN][0])
+            self.virtual_controller.play(self.controller_states[samplesN][0])
             samplesN += 1
-            time.sleep(self.ControllerPollingT)
+            time.sleep(self.controller_polling_T)
 
-        self.vController.controller.reset()
-        self.vController.controller.update()
+        self.virtual_controller.controller.reset()
+        self.virtual_controller.controller.update()
         self.playing = False
 
     def save(self):
@@ -144,7 +140,7 @@ class MacroTool:
             self._record_screen_thread = None
             self._record_controller_thread = None
             self._playing_thread = None
-            self.vController = None ##This will cause error when playback from loaded in macro
+            self.virtual_controller = None ##This will cause error when playback from loaded in macro
 
             with open(self.path, "wb") as file:
                 pickle.dump(self, file)
