@@ -13,8 +13,10 @@ class MacroTool:
 
     def __init__(self, ControllerPollingT, ScreenPollingT, path=None):
 
-        self.ControllerStates = []
-        self.ScreenStates = []
+        # Recordings
+        self.controller_states = []
+        self.screen_states = []
+        self.controller_samples = 0
         
         # Threads
         self._record_screen_thread = None
@@ -43,15 +45,18 @@ class MacroTool:
 
     def start_recording(self):
 
+        # Record screen state
         self._record_screen_thread = threading.Thread(target=self._recording_screen)
         self._record_screen_thread.daemon = True
         self._record_screen_thread.start()
 
+        # Record controller state
+        self.startTime = time.time()
+        self.recording = True
         self._record_controller_thread = threading.Thread(target=self._recording_controller)
         self._record_controller_thread.daemon = True
         self._record_controller_thread.start()
 
-        self.recording = True
 
     def stop_recording(self):
 
@@ -61,18 +66,17 @@ class MacroTool:
 
     def _recording_controller(self):
 
-        samplesN = 0
-        startTime = time.time()
+        while self.recording and not self.passthrough:
 
-        while self.recording == True:
-                
-            controllerState = self.controller.read()
-            self.ControllerStates.append([controllerState, time.time() - startTime])
-            samplesN+=1
-
+            self.snapshot_controller_state()
             time.sleep(self.ControllerPollingT)
             
-        self.ControllerSamples = samplesN
+        
+    def snapshot_controller_state(self):
+
+        controllerState = self.controller.read()
+        self.controller_states.append([controllerState, time.time() - self.startTime])
+        self.controller_samples+=1
     
     def _recording_screen(self):
 
@@ -81,7 +85,7 @@ class MacroTool:
 
         while self.recording == True:
 
-            self.ScreenStates.append([pyautogui.screenshot().tobytes(), time.time()-startTime])
+            self.screen_states.append([pyautogui.screenshot().tobytes(), time.time()-startTime])
             samplesN+=1
 
             time.sleep(self.ScreenPollingT)
@@ -91,7 +95,13 @@ class MacroTool:
     def _passthrough(self):
         
         while self.passthrough:
-            self.vController.play(self.controller.read())
+
+            if not self.playing:
+                self.vController.play(self.controller.read())
+
+            if self.recording:
+                self.snapshot_controller_state()
+
             time.sleep(self.passthrough_delay)
             
     def start_pasthrough(self):
@@ -116,9 +126,9 @@ class MacroTool:
 
         samplesN = 0
 
-        while samplesN< self.ControllerSamples:
+        while samplesN< self.controller_samples:
 
-            self.vController.play(self.ControllerStates[samplesN][0])
+            self.vController.play(self.controller_states[samplesN][0])
             samplesN += 1
             time.sleep(self.ControllerPollingT)
 
